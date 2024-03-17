@@ -16,5 +16,22 @@ export class NetworkCdkStack extends cdk.Stack {
       subnetConfiguration: [],
       createInternetGateway: false,
     })
+
+    // subnets
+    const subnetPub = new ec2.Subnet(this, `${PREFIX}-subnet-pub`, {
+      vpcId: vpc.vpcId,
+      cidrBlock: '192.168.0.0/24',
+      availabilityZone: `${this.region}a`,
+    })
+    const subnetPriv = new ec2.Subnet(this, `${PREFIX}-subnet-priv`, {
+      vpcId: vpc.vpcId,
+      cidrBlock: '192.168.1.0/24',
+      availabilityZone: `${this.region}a`,
+    })
+    const subnetIntra = new ec2.Subnet(this, `${PREFIX}-subnet-intra`, {
+      vpcId: vpc.vpcId,
+      cidrBlock: '192.168.2.0/24',
+      availabilityZone: `${this.region}a`,
+    })
   }
 }
