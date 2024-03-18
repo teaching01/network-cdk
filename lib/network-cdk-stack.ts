@@ -33,5 +33,24 @@ export class NetworkCdkStack extends cdk.Stack {
       cidrBlock: '192.168.2.0/24',
       availabilityZone: `${this.region}a`,
     })
+
+    // igw
+    const igw = new ec2.CfnInternetGateway(this, `${PREFIX}-igw`, {
+      tags: [{ key: 'Name', value: PREFIX }],
+    })
+    new ec2.CfnVPCGatewayAttachment(this, `${PREFIX}-igw-attachment`, {
+      vpcId: vpc.vpcId,
+      internetGatewayId: igw.attrInternetGatewayId,
+    })
+
+    // ngw
+    const eip = new ec2.CfnEIP(this, `${PREFIX}-eip`, {
+      tags: [{ key: 'Name', value: PREFIX }],
+    })
+    const ngw = new ec2.CfnNatGateway(this, `${PREFIX}-ngw`, {
+      subnetId: subnetPub.subnetId,
+      allocationId: eip.attrAllocationId,
+      tags: [{ key: 'Name', value: PREFIX }],
+    })
   }
 }
