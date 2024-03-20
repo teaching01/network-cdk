@@ -52,5 +52,51 @@ export class NetworkCdkStack extends cdk.Stack {
       allocationId: eip.attrAllocationId,
       tags: [{ key: 'Name', value: PREFIX }],
     })
+
+    // route table pub
+    const routeTablePub = new ec2.CfnRouteTable(
+      this,
+      `${PREFIX}-route-table-pub`,
+      {
+        vpcId: vpc.vpcId,
+        tags: [{ key: 'Name', value: PREFIX }],
+      }
+    )
+    new ec2.CfnRoute(this, `${PREFIX}-route-pub`, {
+      routeTableId: routeTablePub.attrRouteTableId,
+      destinationCidrBlock: '0.0.0.0/0',
+      gatewayId: igw.attrInternetGatewayId,
+    })
+    new ec2.CfnSubnetRouteTableAssociation(
+      this,
+      `${PREFIX}-route-table-association-pub`,
+      {
+        routeTableId: routeTablePub.attrRouteTableId,
+        subnetId: subnetPub.subnetId,
+      }
+    )
+
+    // route table priv
+    const routeTablePriv = new ec2.CfnRouteTable(
+      this,
+      `${PREFIX}-route-table-priv`,
+      {
+        vpcId: vpc.vpcId,
+        tags: [{ key: 'Name', value: PREFIX }],
+      }
+    )
+    new ec2.CfnRoute(this, `${PREFIX}-route-priv`, {
+      routeTableId: routeTablePriv.attrRouteTableId,
+      destinationCidrBlock: '0.0.0.0/0',
+      natGatewayId: ngw.attrNatGatewayId,
+    })
+    new ec2.CfnSubnetRouteTableAssociation(
+      this,
+      `${PREFIX}-route-table-association-priv`,
+      {
+        routeTableId: routeTablePriv.attrRouteTableId,
+        subnetId: subnetPriv.subnetId,
+      }
+    )
   }
 }
