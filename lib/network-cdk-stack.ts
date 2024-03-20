@@ -98,5 +98,35 @@ export class NetworkCdkStack extends cdk.Stack {
         subnetId: subnetPriv.subnetId,
       }
     )
+
+    // acl
+    const acl = new ec2.CfnNetworkAcl(this, `${PREFIX}-acl`, {
+      vpcId: vpc.vpcId,
+      tags: [{ key: 'Name', value: PREFIX }],
+    })
+    new ec2.CfnSubnetNetworkAclAssociation(
+      this,
+      `${PREFIX}-acl-association-pub`,
+      {
+        networkAclId: acl.attrId,
+        subnetId: subnetPub.subnetId,
+      }
+    )
+    new ec2.CfnNetworkAclEntry(this, `${PREFIX}-acl-entry-inbound`, {
+      networkAclId: acl.attrId,
+      ruleNumber: 100,
+      protocol: -1,
+      cidrBlock: '0.0.0.0/0',
+      ruleAction: 'allow',
+      egress: false,
+    })
+    new ec2.CfnNetworkAclEntry(this, `${PREFIX}-acl-entry-outbound`, {
+      networkAclId: acl.attrId,
+      ruleNumber: 100,
+      protocol: -1,
+      cidrBlock: '0.0.0.0/0',
+      ruleAction: 'allow',
+      egress: true,
+    })
   }
 }
