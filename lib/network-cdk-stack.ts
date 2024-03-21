@@ -128,5 +128,43 @@ export class NetworkCdkStack extends cdk.Stack {
       ruleAction: 'allow',
       egress: true,
     })
+
+    // sg pub
+    const sgPub = new ec2.SecurityGroup(this, `${PREFIX}-sg-pub`, {
+      vpc: vpc,
+      securityGroupName: `${PREFIX}-sg-pub`,
+    })
+    sgPub.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(22),
+      'allow ssh access from any ip addresses'
+    )
+    sgPub.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      'allow web server access from any ip addresses'
+    )
+
+    // sg priv
+    const sgPriv = new ec2.SecurityGroup(this, `${PREFIX}-sg-priv`, {
+      vpc: vpc,
+      securityGroupName: `${PREFIX}-sg-priv`,
+    })
+    sgPriv.addIngressRule(
+      ec2.Peer.securityGroupId(sgPub.securityGroupId),
+      ec2.Port.tcp(22),
+      'allow ssh access from public subnet'
+    )
+
+    // sg intra
+    const sgIntra = new ec2.SecurityGroup(this, `${PREFIX}-sg-intra`, {
+      vpc: vpc,
+      securityGroupName: `${PREFIX}-sg-intra`,
+    })
+    sgIntra.addIngressRule(
+      ec2.Peer.securityGroupId(sgPriv.securityGroupId),
+      ec2.Port.tcp(22),
+      'allow ssh access from private subnet'
+    )
   }
 }
