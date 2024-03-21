@@ -166,5 +166,21 @@ export class NetworkCdkStack extends cdk.Stack {
       ec2.Port.tcp(22),
       'allow ssh access from private subnet'
     )
+
+    // key pair
+    const keyPair = new ec2.KeyPair(this, `${PREFIX}-key-pair`, {
+      keyPairName: `${PREFIX}-key-pair`,
+    })
+
+    // outputs
+    const keyName = `${PREFIX}.pem`
+    new cdk.CfnOutput(this, `${PREFIX}-get-key-pair`, {
+      value: `aws ssm get-parameter \
+      --name /ec2/keypair/${keyPair.keyPairId} \
+      --region ${this.region} \
+      --with-decryption \
+      --query Parameter.Value \
+      --output text > ${keyName} & chmod 600 ${keyName}`,
+    })
   }
 }
