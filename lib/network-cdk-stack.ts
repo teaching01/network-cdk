@@ -192,6 +192,21 @@ export class NetworkCdkStack extends cdk.Stack {
       instanceId: ec2Pub.instanceId,
     })
 
+    // ec2 priv
+    const ec2Priv = new ec2.Instance(this, `${PREFIX}-ec2-priv`, {
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T2,
+        ec2.InstanceSize.MICRO
+      ),
+      machineImage: new ec2.AmazonLinuxImage({
+        generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
+      }),
+      keyPair: keyPair,
+      vpc: vpc,
+      vpcSubnets: { subnets: [subnetPriv] },
+      securityGroup: sgPriv,
+    })
+
     // outputs
     const keyName = `${PREFIX}.pem`
     new cdk.CfnOutput(this, `${PREFIX}-get-key-pair`, {
@@ -205,6 +220,12 @@ export class NetworkCdkStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, `${PREFIX}-ssh-pub`, {
       value: `ssh -i ${keyName} ec2-user@${ec2Pub.instancePublicIp}`,
+    })
+
+    new cdk.CfnOutput(this, `${PREFIX}-ssh-priv`, {
+      value: `ssh -i ${keyName} \
+      -o ProxyCommand='ssh -i ${keyName} -W %h:%p ec2-user@${ec2Pub.instancePublicIp}' \
+      ec2-user@${ec2Priv.instancePrivateIp}`,
     })
   }
 }
