@@ -172,6 +172,26 @@ export class NetworkCdkStack extends cdk.Stack {
       keyPairName: `${PREFIX}-key-pair`,
     })
 
+    // ec2 pub
+    const ec2Pub = new ec2.Instance(this, `${PREFIX}-ec2-pub`, {
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T2,
+        ec2.InstanceSize.MICRO
+      ),
+      machineImage: new ec2.AmazonLinuxImage({
+        generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
+      }),
+      keyPair: keyPair,
+      vpc: vpc,
+      vpcSubnets: { subnets: [subnetPub] },
+      securityGroup: sgPub,
+    })
+
+    new ec2.CfnEIP(this, `${PREFIX}-eip-pub`, {
+      tags: [{ key: 'Name', value: PREFIX }],
+      instanceId: ec2Pub.instanceId,
+    })
+
     // outputs
     const keyName = `${PREFIX}.pem`
     new cdk.CfnOutput(this, `${PREFIX}-get-key-pair`, {
@@ -181,6 +201,10 @@ export class NetworkCdkStack extends cdk.Stack {
       --with-decryption \
       --query Parameter.Value \
       --output text > ${keyName} & chmod 600 ${keyName}`,
+    })
+
+    new cdk.CfnOutput(this, `${PREFIX}-ssh-pub`, {
+      value: `ssh -i ${keyName} ec2-user@${ec2Pub.instancePublicIp}`,
     })
   }
 }
