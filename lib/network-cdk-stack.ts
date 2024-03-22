@@ -207,6 +207,21 @@ export class NetworkCdkStack extends cdk.Stack {
       securityGroup: sgPriv,
     })
 
+    // ec2 intra
+    const ec2Intra = new ec2.Instance(this, `${PREFIX}-ec2-intra`, {
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T2,
+        ec2.InstanceSize.MICRO
+      ),
+      machineImage: new ec2.AmazonLinuxImage({
+        generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023,
+      }),
+      keyPair: keyPair,
+      vpc: vpc,
+      vpcSubnets: { subnets: [subnetIntra] },
+      securityGroup: sgIntra,
+    })
+
     // outputs
     const keyName = `${PREFIX}.pem`
     new cdk.CfnOutput(this, `${PREFIX}-get-key-pair`, {
@@ -224,6 +239,12 @@ export class NetworkCdkStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, `${PREFIX}-ssh-priv`, {
       value: `ssh -i ${keyName} \
+      -o ProxyCommand='ssh -i ${keyName} -W %h:%p ec2-user@${ec2Pub.instancePublicIp}' \
+      ec2-user@${ec2Priv.instancePrivateIp}`,
+    })
+
+    new cdk.CfnOutput(this, `${PREFIX}-sftp-priv`, {
+      value: `sftp -i ${keyName} \
       -o ProxyCommand='ssh -i ${keyName} -W %h:%p ec2-user@${ec2Pub.instancePublicIp}' \
       ec2-user@${ec2Priv.instancePrivateIp}`,
     })
